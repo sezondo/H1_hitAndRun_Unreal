@@ -1,0 +1,16 @@
+# Unreal Engine 관련 무시 폴더
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vscode/
+.vs/
+*.sln
+*.suo
+*.opensdf
+*.VC.db
+*.VC.opendb
+*.xcodeproj
+
+# Unreal StarterContent 무시
+Content/StarterContent/
