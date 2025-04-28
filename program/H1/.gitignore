@@ -1,0 +1,32 @@
+# Unreal Engine 기본 무시 목록
+
+# 빌드 관련
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Visual Studio 관련
+.vs/
+*.VC.db
+*.VC.opendb
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sdf
+*.opensdf
+*.log
+
+# Mac 관련
+.DS_Store
+
+# 기타
+Thumbs.db
+
+# Git LFS에서 관리할 확장자는 따로 설정 (.gitattributes 에서 관리)
+
+# Android 빌드 관련
+*.apk
+*.obb
