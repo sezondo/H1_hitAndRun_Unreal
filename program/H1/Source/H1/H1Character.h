@@ -7,6 +7,8 @@
 #include "Logging/LogMacros.h"
 #include "H1Character.generated.h"
 
+
+
 class UInputComponent;
 class USkeletalMeshComponent;
 class UCameraComponent;
@@ -45,6 +47,28 @@ class AH1Character : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
 	
+	// 줌 관련 변수들 선언
+private:
+	bool bIsZooming;
+	float DefaultFOV;
+	float ZoomFOV;
+	float ZoomInterpSpeed;
+
+	// 카메라 참조 (있으면 생략, 없으면 추가)
+/*protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	class UCameraComponent* FirstPersonCameraComponent;
+	*/
+	// 함수 선언
+protected:
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	void BeginZoom();
+	void EndZoom();
+
+
 public:
 	AH1Character();
 
@@ -58,7 +82,7 @@ protected:
 protected:
 	// APawn interface
 	virtual void NotifyControllerChanged() override;
-	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
+	//virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override; // 지움 위에꺼 더 많이쓴데
 	// End of APawn interface
 
 public:
