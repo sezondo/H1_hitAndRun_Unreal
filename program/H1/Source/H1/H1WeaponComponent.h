@@ -57,4 +57,6 @@ protected:
 private:
 	/** The Character holding this weapon*/
 	AH1Character* Character;
+
+
 };

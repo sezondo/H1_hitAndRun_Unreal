@@ -27,6 +27,10 @@ void UH1WeaponComponent::Fire()
 	{
 		return;
 	}
+	if (!Character->IsZooming()) // IsZooming() 함수가 없다면 bIsZooming 변수 직접 접근도 가능
+	{
+		return;
+	}
 
 	// Try and fire a projectile
 	if (ProjectileClass != nullptr)

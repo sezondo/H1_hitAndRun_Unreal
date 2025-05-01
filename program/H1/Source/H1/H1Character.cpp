@@ -150,3 +150,8 @@ void AH1Character::EndZoom()
 {
 	bIsZooming = false;
 }
+
+bool AH1Character::IsZooming() const
+{
+	return bIsZooming;
+}

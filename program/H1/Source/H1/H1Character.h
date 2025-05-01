@@ -68,6 +68,9 @@ protected:
 	void BeginZoom();
 	void EndZoom();
 
+public:
+	bool IsZooming() const;
+
 
 public:
 	AH1Character();
