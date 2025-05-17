@@ -18,6 +18,7 @@ UH1WeaponComponent::UH1WeaponComponent()
 {
 	// Default offset from the character location for projectiles to spawn
 	MuzzleOffset = FVector(100.0f, 0.0f, 10.0f);
+
 }
 
 
@@ -57,6 +58,13 @@ void UH1WeaponComponent::Fire()
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, FireSound, Character->GetActorLocation());
 	}
+
+	//1111111111111111111111111111111111111111111111111111111111111
+
+	
+
+	
+	
 	
 	// Try and play a firing animation if specified
 	if (FireAnimation != nullptr)
@@ -68,6 +76,7 @@ void UH1WeaponComponent::Fire()
 			AnimInstance->Montage_Play(FireAnimation, 1.f);
 		}
 	}
+	
 }
 
 bool UH1WeaponComponent::AttachWeapon(AH1Character* TargetCharacter)

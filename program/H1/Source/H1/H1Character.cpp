@@ -18,6 +18,9 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 AH1Character::AH1Character()
 {
+
+	
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f); //충돌 캡슐 크기 설정
 		
@@ -35,6 +38,11 @@ AH1Character::AH1Character()
 	Mesh1P->CastShadow = false; //CastShadow 및 bCastDynamicShadow를 false로 비활성화하면 그림자가 안 생겨. 이건 성능 최적화 목적이 크고, 1인칭 팔이 지형에 그림자 지면 어색해서 꺼두는 게 일반적이야.
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f)); //SetRelativeLocation은 팔 위치 조정. 카메라 기준으로 약간 아래(-150)로 내려놓은 거지.
 
+	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimBPClass(TEXT("/Game/fps-animations-sniper-rifle/source/ABP_SRMan"));
+	if (AnimBPClass.Succeeded())
+	{
+		Mesh1P->SetAnimInstanceClass(AnimBPClass.Class);
+	}
 
 	//추가
 	PrimaryActorTick.bCanEverTick = true; //이 캐릭터는 매 프레임마다 Tick() 함수를 실행하겠다는 뜻이야
