@@ -11,6 +11,11 @@
 #include "InputActionValue.h"
 #include "Engine/LocalPlayer.h"
 #include "H1WeaponComponent.h"
+#include "Blueprint/UserWidget.h"
+#include "USniperOverlayWidget.h"
+
+
+
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -69,6 +74,15 @@ void AH1Character::BeginPlay() //부모 클래스(ACharacter)의 BeginPlay를 �
 		WeaponComponent->AttachWeapon(this);
 	}
 
+	if (SniperOverlayClass)//이거 나중에 확인할것
+	{
+		SniperOverlay = CreateWidget(GetWorld(), SniperOverlayClass);
+		if (SniperOverlay)
+		{
+			SniperOverlay->AddToViewport();
+			SniperOverlay->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
@@ -163,6 +177,33 @@ void AH1Character::Tick(float DeltaTime) // 매 프레임마다 호출함 이게
 	
 
 }
+
+void AH1Character::StartZoom()
+{
+	if (USniperOverlayWidget* Overlay = Cast<USniperOverlayWidget>(SniperOverlay))
+	{
+		Overlay->SetVisibility(ESlateVisibility::Visible);
+		Overlay->PlayFadeIn();
+	}
+
+	// 카메라 FOV 조정 등 추가
+}
+
+void AH1Character::StopZoom()
+{
+	USniperOverlayWidget* Overlay = Cast<USniperOverlayWidget>(SniperOverlay);
+	if (Overlay)
+	{
+		Overlay->PlayFadeOut();
+
+		FTimerHandle HideHandle;
+		GetWorldTimerManager().SetTimer(HideHandle, [Overlay]()
+			{
+				Overlay->SetVisibility(ESlateVisibility::Hidden);
+			}, 0.5f, false);
+	}
+}
+
 
 
 

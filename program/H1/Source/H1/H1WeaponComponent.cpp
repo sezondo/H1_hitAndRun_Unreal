@@ -23,81 +23,101 @@ UH1WeaponComponent::UH1WeaponComponent()
 
 
 void UH1WeaponComponent::Fire()
-{	
-	float CurrentTime = Character->GetWorld()->GetTimeSeconds();
+{
+	if (!Character || !Character->GetController()) return;
+	if (!Character->IsZooming()) return;
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	float CurrentTime = GetWorld()->GetTimeSeconds();
 
 	if (CurrentTime - LastFireTime < FireCooldown)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("총알 쿨타임 중... %.2f초 남음"), FireCooldown - (CurrentTime - LastFireTime));
 		return;
 	}
-	LastFireTime = CurrentTime;
 
-	if (Character == nullptr || Character->GetController() == nullptr)
+	if (!ProjectileClass)
 	{
-		return;
-	}
-	if (!Character->IsZooming()) // IsZooming() 함수가 없다면 bIsZooming 변수 직접 접근도 가능
-	{
+		UE_LOG(LogTemp, Error, TEXT("ProjectileClass is NULL"));
 		return;
 	}
 
-	// Try and fire a projectile
-	if (ProjectileClass != nullptr)
+	// 발사 회전: 카메라 기준
+	const FRotator SpawnRotation = Character->GetControlRotation();
+
+	// 발사 위치: 무기 메시의 Muzzle 소켓
+	USkeletalMeshComponent* Mesh = Character->GetMesh1P(); // CharacterMesh0 기준
+	if (!Mesh->DoesSocketExist("Muzzle"))
 	{
-		UWorld* const World = GetWorld();
-		if (World != nullptr)
-		{
-			APlayerController* PlayerController = Cast<APlayerController>(Character->GetController());
-			const FRotator SpawnRotation = PlayerController->PlayerCameraManager->GetCameraRotation();
-			// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-			const FVector SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset);
-	
-			//Set Spawn Collision Handling Override
-			FActorSpawnParameters ActorSpawnParams;
-			ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-	
-			// Spawn the projectile at the muzzle
-			World->SpawnActor<AH1Projectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
-		}
+		UE_LOG(LogTemp, Error, TEXT("Muzzle socket not found on mesh"));
+		return;
 	}
-	
-	// Try and play the sound if specified
-	if (FireSound != nullptr)
+
+	const FVector SpawnLocation = Mesh->GetSocketLocation("Muzzle");
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+
+	AActor* Projectile = World->SpawnActor<AH1Projectile>(ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
+	if (Projectile)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Projectile Spawn Success: %s"), *Projectile->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Projectile Spawn Failed"));
+	}
+
+	LastFireTime = World->GetTimeSeconds();
+
+	// 사운드
+	if (FireSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, FireSound, Character->GetActorLocation());
 	}
 
-	//1111111111111111111111111111111111111111111111111111111111111
-
-	
-
-	
-	
-	
-	// Try and play a firing animation if specified
-	if (FireAnimation != nullptr)
+	// 애니메이션
+	if (FireAnimation)
 	{
-		// Get the animation object for the arms mesh
-		UAnimInstance* AnimInstance = Character->GetMesh1P()->GetAnimInstance();
-		if (AnimInstance != nullptr)
+		if (UAnimInstance* Anim = Character->GetMesh1P()->GetAnimInstance())
 		{
-			AnimInstance->Montage_Play(FireAnimation, 1.f);
+			Anim->Montage_Play(FireAnimation, 1.f);
 		}
 	}
-	
 }
+
 
 bool UH1WeaponComponent::AttachWeapon(AH1Character* TargetCharacter)
 {
 	Character = TargetCharacter;
-
+	/*
 	// Check that the character is valid, and has no weapon component yet
 	if (Character == nullptr || Character->GetInstanceComponents().FindItemByClass<UH1WeaponComponent>())
 	{
 		return false;
 	}
+	*/
 
+	if (!Character)
+	{
+		return false;
+	}
+
+	if (APlayerController* PlayerController = Cast<APlayerController>(Character->GetController()))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(FireMappingContext, 1);
+		}
+
+		if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerController->InputComponent))
+		{
+			EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Triggered, this, &UH1WeaponComponent::Fire);
+		}
+	}
+	/*
 	// Attach the weapon to the First Person Character
 	FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
 	AttachToComponent(Character->GetMesh1P(), AttachmentRules, FName(TEXT("GripPoint")));
@@ -117,7 +137,7 @@ bool UH1WeaponComponent::AttachWeapon(AH1Character* TargetCharacter)
 			EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Triggered, this, &UH1WeaponComponent::Fire);
 		}
 	}
-
+	*/
 	return true;
 }
 

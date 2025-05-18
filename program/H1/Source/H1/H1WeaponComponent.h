@@ -61,6 +61,6 @@ private:
 
 	//이거 총알 쿨타임
 	float LastFireTime; // 마지막 발사 시간
-	float FireCooldown = 3.0f; // 쿨타임 (초)
+	float FireCooldown = 1.9f; // 쿨타임 (초)
 
 };

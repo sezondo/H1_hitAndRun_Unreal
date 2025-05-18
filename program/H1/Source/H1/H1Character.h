@@ -51,6 +51,9 @@ class AH1Character : public ACharacter
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	UH1WeaponComponent* WeaponComponent;
+
+	UPROPERTY()
+	UUserWidget* SniperOverlay;
 	
 
 	
@@ -102,6 +105,14 @@ public:
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> SniperOverlayClass;
+
+	//UUserWidget* SniperOverlay;
+
+	void StartZoom();
+	void StopZoom();
 
 };
 

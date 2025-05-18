@@ -33,5 +33,10 @@ public:
 	USphereComponent* GetCollisionComp() const { return CollisionComp; }
 	/** Returns ProjectileMovement subobject **/
 	UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
+
+	// H1Projectile.h 안에
+protected:
+	virtual void BeginPlay() override;
+
 };
 
