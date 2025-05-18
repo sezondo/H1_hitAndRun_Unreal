@@ -6,6 +6,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "H1WeaponComponent.generated.h"
 
+
 class AH1Character;
 
 UCLASS(Blueprintable, BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -58,5 +59,8 @@ private:
 	/** The Character holding this weapon*/
 	AH1Character* Character;
 
+	//이거 총알 쿨타임
+	float LastFireTime; // 마지막 발사 시간
+	float FireCooldown = 3.0f; // 쿨타임 (초)
 
 };

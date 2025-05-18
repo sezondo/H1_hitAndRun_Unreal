@@ -10,6 +10,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Engine/LocalPlayer.h"
+#include "H1WeaponComponent.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -18,7 +19,9 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 AH1Character::AH1Character()
 {
-
+	// H1Character.cpp - 생성자에 추가
+	WeaponComponent = CreateDefaultSubobject<UH1WeaponComponent>(TEXT("WeaponComponent"));
+	
 	
 
 	// Set size for collision capsule
@@ -60,6 +63,12 @@ void AH1Character::BeginPlay() //부모 클래스(ACharacter)의 BeginPlay를 �
 	{
 		DefaultFOV = FirstPersonCameraComponent->FieldOfView; // 현재 카메라의 FOV 값을 DefaultFOV에 저장. 이건 나중에 줌 풀었을때 시야를 어디로 돌아올꺼냐 하는거임
 	}
+
+	if (WeaponComponent)
+	{
+		WeaponComponent->AttachWeapon(this);
+	}
+
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
@@ -76,6 +85,12 @@ void AH1Character::NotifyControllerChanged() // 컨트롤러가 바뀌었을떄 
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+	//이거 추가
+	if (WeaponComponent)
+	{
+		WeaponComponent->AttachWeapon(this); // 이제 확실히 컨트롤러가 붙은 시점이라서 안정적으로 작동함
+	}
+
 }
 
 void AH1Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)  // 키연결임 나중에 참고하면될듯
@@ -83,9 +98,9 @@ void AH1Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		// Jumping 점프 다시하고싶으면 이거 주석 푸셈
+		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AH1Character::Move);
@@ -144,6 +159,9 @@ void AH1Character::Tick(float DeltaTime) // 매 프레임마다 호출함 이게
 		);
 		FirstPersonCameraComponent->SetFieldOfView(NewFOV);
 	}
+
+	
+
 }
 
 

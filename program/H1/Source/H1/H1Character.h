@@ -3,10 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "H1WeaponComponent.h"
 #include "GameFramework/Character.h"
-#include "Logging/LogMacros.h"
-#include "H1Character.generated.h"
 
+#include "Logging/LogMacros.h"
+
+#include "H1Character.generated.h"
 
 
 class UInputComponent;
@@ -46,6 +48,11 @@ class AH1Character : public ACharacter
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	UH1WeaponComponent* WeaponComponent;
+	
+
 	
 	// 줌 관련 변수들 선언
 private:
@@ -53,6 +60,8 @@ private:
 	float DefaultFOV;
 	float ZoomFOV;
 	float ZoomInterpSpeed;
+
+	
 
 	// 카메라 참조 (있으면 생략, 없으면 추가)
 /*protected:

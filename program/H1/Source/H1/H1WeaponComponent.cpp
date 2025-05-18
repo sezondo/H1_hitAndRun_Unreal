@@ -23,7 +23,16 @@ UH1WeaponComponent::UH1WeaponComponent()
 
 
 void UH1WeaponComponent::Fire()
-{
+{	
+	float CurrentTime = Character->GetWorld()->GetTimeSeconds();
+
+	if (CurrentTime - LastFireTime < FireCooldown)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("총알 쿨타임 중... %.2f초 남음"), FireCooldown - (CurrentTime - LastFireTime));
+		return;
+	}
+	LastFireTime = CurrentTime;
+
 	if (Character == nullptr || Character->GetController() == nullptr)
 	{
 		return;
