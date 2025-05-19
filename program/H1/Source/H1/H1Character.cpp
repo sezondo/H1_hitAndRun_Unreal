@@ -13,6 +13,9 @@
 #include "H1WeaponComponent.h"
 #include "Blueprint/UserWidget.h"
 #include "USniperOverlayWidget.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+
 
 
 
@@ -55,8 +58,8 @@ AH1Character::AH1Character()
 	//추가
 	PrimaryActorTick.bCanEverTick = true; //이 캐릭터는 매 프레임마다 Tick() 함수를 실행하겠다는 뜻이야
 	bIsZooming = false; // 줌상태인가 아닌가
-	ZoomFOV = 30.0f; // 줌상태일떄의 FOV 숫자가 작을수록 카메라가 더 좁고 확대댐 이 수치로 줌 구현
-	ZoomInterpSpeed = 10.0f; //현재 FOV에서 ZoomFOV까지 부드럽게 전환할 때 사용하는 보간 속도.
+	ZoomFOV = 23.0f; // 줌상태일떄의 FOV 숫자가 작을수록 카메라가 더 좁고 확대댐 이 수치로 줌 구현
+	ZoomInterpSpeed = 5.0f; //현재 FOV에서 ZoomFOV까지 부드럽게 전환할 때 사용하는 보간 속도.
 
 }
 
@@ -74,15 +77,31 @@ void AH1Character::BeginPlay() //부모 클래스(ACharacter)의 BeginPlay를 �
 		WeaponComponent->AttachWeapon(this);
 	}
 
-	if (SniperOverlayClass)//이거 나중에 확인할것
+	if (SniperOverlayClass)
 	{
 		SniperOverlay = CreateWidget(GetWorld(), SniperOverlayClass);
 		if (SniperOverlay)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("SniperOverlay 위젯 생성 성공!"));
 			SniperOverlay->AddToViewport();
 			SniperOverlay->SetVisibility(ESlateVisibility::Hidden);
 		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("SniperOverlay 생성 실패!"));
+		}
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("SniperOverlayClass 미할당!"));
+	}
+	
+	FootstepAudioComp = NewObject<UAudioComponent>(this);
+	FootstepAudioComp->RegisterComponent();
+	FootstepAudioComp->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	FootstepAudioComp->bAutoActivate = false;
+
+
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
@@ -175,6 +194,30 @@ void AH1Character::Tick(float DeltaTime) // 매 프레임마다 호출함 이게
 	}
 
 	
+	
+
+	// FOV
+	const float Speed = GetVelocity().Size2D();
+	const bool bIsOnGround = GetCharacterMovement() && GetCharacterMovement()->IsMovingOnGround();
+
+	if (Speed > 10.f && bIsOnGround)
+	{
+		if (FootstepSound && !FootstepAudioComp->IsPlaying())
+		{
+			FootstepAudioComp->SetSound(FootstepSound);
+			FootstepAudioComp->Play();
+		}
+	}
+	else
+	{
+		if (FootstepAudioComp->IsPlaying())
+		{
+			FootstepAudioComp->Stop();
+		}
+	}
+
+	
+
 
 }
 
@@ -182,8 +225,9 @@ void AH1Character::StartZoom()
 {
 	if (USniperOverlayWidget* Overlay = Cast<USniperOverlayWidget>(SniperOverlay))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("SniperOverlay 위젯 생성 성공!"));
 		Overlay->SetVisibility(ESlateVisibility::Visible);
-		Overlay->PlayFadeIn();
+		Overlay->PlaySniperTransitionIn();
 	}
 
 	// 카메라 FOV 조정 등 추가
@@ -191,16 +235,15 @@ void AH1Character::StartZoom()
 
 void AH1Character::StopZoom()
 {
-	USniperOverlayWidget* Overlay = Cast<USniperOverlayWidget>(SniperOverlay);
-	if (Overlay)
+	if (USniperOverlayWidget* Overlay = Cast<USniperOverlayWidget>(SniperOverlay))
 	{
-		Overlay->PlayFadeOut();
-
+		Overlay->PlaySniperTransitionOut();
+		// FadeOutAnim까지 끝나고 숨김 처리(1초 후)
 		FTimerHandle HideHandle;
 		GetWorldTimerManager().SetTimer(HideHandle, [Overlay]()
 			{
 				Overlay->SetVisibility(ESlateVisibility::Hidden);
-			}, 0.5f, false);
+			}, 1.0f, false);
 	}
 }
 
@@ -211,11 +254,15 @@ void AH1Character::StopZoom()
 void AH1Character::BeginZoom()
 {
 	bIsZooming = true;
+	UE_LOG(LogTemp, Warning, TEXT("BeginZoom called!"));
+	StartZoom();
 }
 
 void AH1Character::EndZoom()
 {
 	bIsZooming = false;
+	UE_LOG(LogTemp, Warning, TEXT("EndZoom called!"));
+	StopZoom();
 }
 
 bool AH1Character::IsZooming() const

@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "H1WeaponComponent.h"
 #include "GameFramework/Character.h"
-
+#include "Components/AudioComponent.h"
 #include "Logging/LogMacros.h"
 
 #include "H1Character.generated.h"
@@ -54,6 +54,19 @@ class AH1Character : public ACharacter
 
 	UPROPERTY()
 	UUserWidget* SniperOverlay;
+
+	// .h
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	USoundBase* FootstepSound;
+
+	float StepInterval = 0.4f;
+	float TimeSinceLastStep = 0.0f;
+	bool bFootstepPlaying = false;
+
+	UPROPERTY()
+	UAudioComponent* FootstepAudioComp;
+
+
 	
 
 	
