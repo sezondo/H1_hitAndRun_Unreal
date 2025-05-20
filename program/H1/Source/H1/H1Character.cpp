@@ -269,3 +269,6 @@ bool AH1Character::IsZooming() const
 {
 	return bIsZooming;
 }
+
+
+

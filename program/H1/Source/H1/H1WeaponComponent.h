@@ -4,10 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Components/SkeletalMeshComponent.h"
+
 #include "H1WeaponComponent.generated.h"
 
 
+
 class AH1Character;
+class UNiagaraSystem;
 
 UCLASS(Blueprintable, BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class H1_API UH1WeaponComponent : public USkeletalMeshComponent
@@ -16,9 +19,10 @@ class H1_API UH1WeaponComponent : public USkeletalMeshComponent
 
 public:
 	/** Projectile class to spawn */
+	/*
 	UPROPERTY(EditDefaultsOnly, Category=Projectile)
 	TSubclassOf<class AH1Projectile> ProjectileClass;
-
+	*/
 	/** Sound to play each time we fire */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
 	USoundBase* FireSound;
@@ -62,5 +66,39 @@ private:
 	//이거 총알 쿨타임
 	float LastFireTime; // 마지막 발사 시간
 	float FireCooldown = 1.9f; // 쿨타임 (초)
+
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UParticleSystem* MuzzleFlashEffect;
+
+	
+
+	// 탄도 관련
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	float BulletSpeed = 15000.f; // 속도
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	float BulletDamage = 100.f; // 데미지
+
+	// 탄도 라인트레이스 함수 선언
+	void BallisticLineTrace();
+
+	// 머즐 플래시 함수 선언
+	void PlayMuzzleFlash();
+
+	
+	
+
+	// Niagara 기반 피격 이펙트
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UNiagaraSystem* DefaultImpactNiagaraFX;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UNiagaraSystem* BloodImpactNiagaraFX;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	TSubclassOf<UCameraShakeBase> FireCameraShake;
+
+
 
 };

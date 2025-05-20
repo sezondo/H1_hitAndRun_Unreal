@@ -3,15 +3,18 @@
 
 #include "H1WeaponComponent.h"
 #include "H1Character.h"
-#include "H1Projectile.h"
+
 #include "GameFramework/PlayerController.h"
 #include "Camera/PlayerCameraManager.h"
+#include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Animation/AnimInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
+#include "NiagaraSystem.h"
+#include "NiagaraFunctionLibrary.h"
 
 // Sets default values for this component's properties
 UH1WeaponComponent::UH1WeaponComponent()
@@ -38,14 +41,36 @@ void UH1WeaponComponent::Fire()
 		return;
 	}
 
-	if (!ProjectileClass)
+	LastFireTime = CurrentTime;
+
+	// 1. 머즐 플래시 이펙트
+	PlayMuzzleFlash();
+
+	// 2. 탄도 라인트레이스
+	BallisticLineTrace();
+
+	//카메라 반동
+	if (APlayerController* PC = Cast<APlayerController>(Character->GetController()))
 	{
-		UE_LOG(LogTemp, Error, TEXT("ProjectileClass is NULL"));
-		return;
+		if (!FireCameraShake)
+		{
+			UE_LOG(LogTemp, Error, TEXT("FireCameraShake is NULL!"));
+		}
+		else if (!PC->PlayerCameraManager)
+		{
+			UE_LOG(LogTemp, Error, TEXT("PlayerCameraManager is NULL!"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Playing Camera Shake: %s"), *FireCameraShake->GetName());
+			PC->PlayerCameraManager->StartCameraShake(FireCameraShake);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerController is NULL!"));
 	}
 
-	// 발사 회전: 카메라 기준
-	const FRotator SpawnRotation = Character->GetControlRotation();
 
 	// 발사 위치: 무기 메시의 Muzzle 소켓
 	USkeletalMeshComponent* Mesh = Character->GetMesh1P(); // CharacterMesh0 기준
@@ -55,20 +80,6 @@ void UH1WeaponComponent::Fire()
 		return;
 	}
 
-	const FVector SpawnLocation = Mesh->GetSocketLocation("Muzzle");
-
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-
-	AActor* Projectile = World->SpawnActor<AH1Projectile>(ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
-	if (Projectile)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Projectile Spawn Success: %s"), *Projectile->GetName());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Projectile Spawn Failed"));
-	}
 
 	LastFireTime = World->GetTimeSeconds();
 
@@ -86,6 +97,9 @@ void UH1WeaponComponent::Fire()
 			Anim->Montage_Play(FireAnimation, 1.f);
 		}
 	}
+
+	
+
 }
 
 
@@ -117,27 +131,9 @@ bool UH1WeaponComponent::AttachWeapon(AH1Character* TargetCharacter)
 			EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Triggered, this, &UH1WeaponComponent::Fire);
 		}
 	}
-	/*
-	// Attach the weapon to the First Person Character
-	FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
-	AttachToComponent(Character->GetMesh1P(), AttachmentRules, FName(TEXT("GripPoint")));
 
-	// Set up action bindings
-	if (APlayerController* PlayerController = Cast<APlayerController>(Character->GetController()))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			// Set the priority of the mapping to 1, so that it overrides the Jump action with the Fire action when using touch input
-			Subsystem->AddMappingContext(FireMappingContext, 1);
-		}
 
-		if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerController->InputComponent))
-		{
-			// Fire
-			EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Triggered, this, &UH1WeaponComponent::Fire);
-		}
-	}
-	*/
+	
 	return true;
 }
 
@@ -158,4 +154,72 @@ void UH1WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	// maintain the EndPlay call chain
 	Super::EndPlay(EndPlayReason);
+}
+
+
+void UH1WeaponComponent::PlayMuzzleFlash()
+{
+	if (!MuzzleFlashEffect || !Character) return;
+
+	USkeletalMeshComponent* Mesh = Character->GetMesh1P();
+	if (!Mesh || !Mesh->DoesSocketExist("Muzzle")) return;
+
+	FVector MuzzleLoc = Mesh->GetSocketLocation("Muzzle");
+	FRotator MuzzleRot = Mesh->GetSocketRotation("Muzzle");
+
+	UGameplayStatics::SpawnEmitterAtLocation(
+		GetWorld(),
+		MuzzleFlashEffect,
+		MuzzleLoc,
+		MuzzleRot
+	);
+}
+
+//이거 곰 사슴 추가되면 추가해해ㅐㅐㅐㅐ
+
+void UH1WeaponComponent::BallisticLineTrace()
+{
+	USkeletalMeshComponent* Mesh = Character->GetMesh1P();
+	if (!Mesh->DoesSocketExist("Muzzle")) return;
+
+	FVector Start = Mesh->GetSocketLocation("Muzzle");
+	FVector Velocity = Character->GetFirstPersonCameraComponent()->GetForwardVector() * BulletSpeed;
+	FVector Gravity = FVector(0, 0, -980.f);
+
+	float DeltaTime = 0.02f;
+	float MaxTime = 2.f;
+	FVector Current = Start;
+
+	for (float Time = 0.f; Time < MaxTime; Time += DeltaTime)
+	{
+		FVector Next = Current + Velocity * DeltaTime + 0.5f * Gravity * DeltaTime * DeltaTime;
+		Velocity += Gravity * DeltaTime;
+
+		FHitResult Hit;
+		if (GetWorld()->LineTraceSingleByChannel(Hit, Current, Next, ECC_Visibility))
+		{
+			UNiagaraSystem* ImpactFX = DefaultImpactNiagaraFX;
+
+			if (AActor* HitActor = Hit.GetActor())
+			{
+				if (HitActor->ActorHasTag("Deer") || HitActor->ActorHasTag("Bear"))
+				{
+					ImpactFX = BloodImpactNiagaraFX;
+				}
+			}
+
+			if (ImpactFX)
+			{
+				UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+					GetWorld(),
+					ImpactFX,
+					Hit.ImpactPoint,
+					Hit.ImpactNormal.Rotation()
+				);
+			}
+			break; // 첫 충돌만 처리
+		}
+
+		Current = Next;
+	}
 }
