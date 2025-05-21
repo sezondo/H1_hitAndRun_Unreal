@@ -180,7 +180,7 @@ void UH1WeaponComponent::PlayMuzzleFlash()
 void UH1WeaponComponent::BallisticLineTrace()
 {
 	USkeletalMeshComponent* Mesh = Character->GetMesh1P();
-	if (!Mesh->DoesSocketExist("Muzzle")) return;
+	if (!Mesh || !Mesh->DoesSocketExist("Muzzle")) return;
 
 	FVector Start = Mesh->GetSocketLocation("Muzzle");
 	FVector Velocity = Character->GetFirstPersonCameraComponent()->GetForwardVector() * BulletSpeed;
@@ -198,14 +198,30 @@ void UH1WeaponComponent::BallisticLineTrace()
 		FHitResult Hit;
 		if (GetWorld()->LineTraceSingleByChannel(Hit, Current, Next, ECC_Visibility))
 		{
+			AActor* HitActor = Hit.GetActor();
+
+			if (HitActor)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("총알 충돌: %s"), *HitActor->GetName());
+
+				// 데미지 적용
+				UGameplayStatics::ApplyPointDamage(
+					HitActor,
+					BulletDamage,
+					Velocity.GetSafeNormal(),
+					Hit,
+					Character->GetController(),
+					Character,
+					nullptr
+				);
+			}
+
+			// 피격 이펙트 선택
 			UNiagaraSystem* ImpactFX = DefaultImpactNiagaraFX;
 
-			if (AActor* HitActor = Hit.GetActor())
+			if (HitActor && (HitActor->ActorHasTag("Deer") || HitActor->ActorHasTag("Bear")))
 			{
-				if (HitActor->ActorHasTag("Deer") || HitActor->ActorHasTag("Bear"))
-				{
-					ImpactFX = BloodImpactNiagaraFX;
-				}
+				ImpactFX = BloodImpactNiagaraFX;
 			}
 
 			if (ImpactFX)
@@ -217,6 +233,7 @@ void UH1WeaponComponent::BallisticLineTrace()
 					Hit.ImpactNormal.Rotation()
 				);
 			}
+
 			break; // 첫 충돌만 처리
 		}
 
