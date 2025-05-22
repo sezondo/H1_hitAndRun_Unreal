@@ -75,10 +75,10 @@ private:
 
 	// 탄도 관련
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
-	float BulletSpeed = 15000.f; // 속도
+	float BulletSpeed = 20000.f; // 속도
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
-	float BulletDamage = 100.f; // 데미지
+	float BulletDamage = 80.f; // 데미지
 
 	// 탄도 라인트레이스 함수 선언
 	void BallisticLineTrace();

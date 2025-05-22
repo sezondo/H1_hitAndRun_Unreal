@@ -15,6 +15,7 @@
 #include "Engine/World.h"
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
+#include "DeerCharacter.h"
 
 // Sets default values for this component's properties
 UH1WeaponComponent::UH1WeaponComponent()
@@ -98,7 +99,20 @@ void UH1WeaponComponent::Fire()
 		}
 	}
 
-	
+	// Deer 감지 로직
+	TArray<AActor*> OutActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADeerCharacter::StaticClass(), OutActors);
+
+	for (AActor* Actor : OutActors)
+	{
+		ADeerCharacter* Deer = Cast<ADeerCharacter>(Actor);
+		if (Deer && FVector::Dist(Deer->GetActorLocation(), Character->GetActorLocation()) < 10000.f) // 총소리 감지
+		{
+			const FVector FleeDirection = (Deer->GetActorLocation() - Character->GetActorLocation()).GetSafeNormal();
+			Deer->StartFleeingFromDirection(FleeDirection);
+		}
+	}
+
 
 }
 
