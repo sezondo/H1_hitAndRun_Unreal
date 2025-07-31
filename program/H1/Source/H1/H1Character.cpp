@@ -41,6 +41,8 @@ AH1Character::AH1Character()
 	FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.f, 0.f, 60.f)); // SetRelativeLocation(...)은 카메라의 위치 조절. 약간 앞(-10), 위(60)에 둠.
 	FirstPersonCameraComponent->bUsePawnControlRotation = true; //bUsePawnControlRotation = true는 마우스나 패드로 움직일 때 카메라도 회전하도록 설정.
 
+	FirstPersonCameraComponent->bAutoActivate = true; //camera activate
+
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P")); //Mesh1P는 1인칭 전용으로 보이는 팔(또는 무기)을 담당하는 스켈레탈 메시야.
 	Mesh1P->SetOnlyOwnerSee(true); //SetOnlyOwnerSee(true)로 설정해서 본인만 이 메시를 보게 됨. 즉, 멀티플레이어일 경우, 다른 플레이어는 이 팔을 못 봐.
@@ -61,6 +63,8 @@ AH1Character::AH1Character()
 	ZoomFOV = 23.0f; // 줌상태일떄의 FOV 숫자가 작을수록 카메라가 더 좁고 확대댐 이 수치로 줌 구현
 	ZoomInterpSpeed = 5.0f; //현재 FOV에서 ZoomFOV까지 부드럽게 전환할 때 사용하는 보간 속도.
 
+
+
 }
 
 void AH1Character::BeginPlay() //부모 클래스(ACharacter)의 BeginPlay를 먼저 실행해. 안 해주면 부모 쪽에서 준비해둔 기능들이 빠질 수 있음.
@@ -70,6 +74,8 @@ void AH1Character::BeginPlay() //부모 클래스(ACharacter)의 BeginPlay를 �
 	if (FirstPersonCameraComponent) // 카메라 초기화 확인
 	{
 		DefaultFOV = FirstPersonCameraComponent->FieldOfView; // 현재 카메라의 FOV 값을 DefaultFOV에 저장. 이건 나중에 줌 풀었을때 시야를 어디로 돌아올꺼냐 하는거임
+	
+		FirstPersonCameraComponent->Activate();
 	}
 
 	if (WeaponComponent)

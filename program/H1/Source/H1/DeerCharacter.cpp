@@ -30,6 +30,7 @@ void ADeerCharacter::BeginPlay()
 
 	CurrentHealth = MaxHealth;
     PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	SpawnDefaultController();
 	GetWorldTimerManager().SetTimer(WanderTimerHandle, this, &ADeerCharacter::Wander, 5.0f, true);
 
 }
@@ -74,17 +75,32 @@ void ADeerCharacter::StartFleeingFromDirection(const FVector& Direction)
 
 	bIsFleeing = true;
 
-	const FVector TargetLocation = GetActorLocation() + Direction * FleeDistance;
+	// NavMesh 기반 도망 위치 설정
+	FVector BaseTargetLocation = GetActorLocation() + Direction * FleeDistance;
 
+	// 랜덤 보정 추가
+	FVector RandomOffset(FMath::RandRange(-300.f, 300.f), FMath::RandRange(-300.f, 300.f), 0.f);
+	FVector RawTargetLocation = BaseTargetLocation + RandomOffset;
 
+	// NavMesh 유효 위치로 보정
+	FNavLocation ValidLocation;
+	UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+
+	FVector FinalTargetLocation = RawTargetLocation;
+	if (NavSys && NavSys->GetRandomReachablePointInRadius(RawTargetLocation, 300.f, ValidLocation))
+	{
+		FinalTargetLocation = ValidLocation.Location;
+	}
+
+	// 이동 실행
 	if (AAIController* AIController = Cast<AAIController>(GetController()))
 	{
 		GetCharacterMovement()->MaxWalkSpeed = 800.f;
-
-		AIController->MoveToLocation(TargetLocation);
+		AIController->MoveToLocation(FinalTargetLocation);
 	}
 
-	GetWorldTimerManager().ClearTimer(WanderTimerHandle); // 도망 중엔 산책 멈춤
+	// Wander 중지 및 도망 타이머 시작
+	GetWorldTimerManager().ClearTimer(WanderTimerHandle);
 	GetWorldTimerManager().SetTimer(FleeResetTimerHandle, this, &ADeerCharacter::ResetFleeState, 5.0f, false);
 
 }

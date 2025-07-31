@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+	// Copyright Epic Games, Inc. All Rights Reserved.
 
 
 #include "H1WeaponComponent.h"
@@ -16,6 +16,9 @@
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
 #include "DeerCharacter.h"
+#include "BearCharacter.h"            
+#include "Bear_AIController.h"            
+#include "BehaviorTree/BlackboardComponent.h"
 
 // Sets default values for this component's properties
 UH1WeaponComponent::UH1WeaponComponent()
@@ -113,7 +116,26 @@ void UH1WeaponComponent::Fire()
 		}
 	}
 
+	TArray<AActor*> BearActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABearCharacter::StaticClass(), BearActors);
 
+	for (AActor* Actor : BearActors)
+	{
+		ABearCharacter* Bear = Cast<ABearCharacter>(Actor);
+		if (!Bear) continue;
+
+		float Distance = FVector::Dist(Bear->GetActorLocation(), Character->GetActorLocation());
+		if (Distance > 10000.f) continue;
+
+		ABear_AIController* AIController = Cast<ABear_AIController>(Bear->GetController());
+		if (!AIController) continue;
+
+		UBlackboardComponent* BB = AIController->GetBlackboardComponent();
+		if (!BB) continue;
+
+		BB->SetValueAsBool("bHeardGunshot", true);
+		BB->SetValueAsObject("TargetActor", Character);
+	}
 }
 
 

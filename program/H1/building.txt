@@ -1,0 +1,3 @@
+"C:\Program Files\Epic Games\UE_5.5\Engine\Build\BatchFiles\Build.bat" H1Editor Win64 Development "D:\H1_hitAndRun_Unreal\H1_hitAndRun_Unreal\program\H1\H1.uproject"
+
+"C:\Program Files\Epic Games\UE_5.5\Engine\Build\BatchFiles\Build.bat" H1 Win64 Development "D:\H1_hitAndRun_Unreal\H1_hitAndRun_Unreal\program\H1\H1.uproject"
