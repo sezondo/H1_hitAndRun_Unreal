@@ -21,7 +21,7 @@ ABear_AIController::ABear_AIController()
     static ConstructorHelpers::FObjectFinder<UBlackboardData> BBObj(TEXT("/Script/AIModule.BlackboardData'/Game/bear-animated-urso-3d-model-free/Blueprints/BB_BearCharacter.BB_BearCharacter'"));
     if (BBObj.Succeeded())
     {
-        UE_LOG(LogTemp, Warning, TEXT("bbobj 연결 성공: %s"), *BBObj.Object->GetName());
+        //UE_LOG(LogTemp, Warning, TEXT("bbobj 연결 성공: %s"), *BBObj.Object->GetName());
         BBAsset = BBObj.Object;
     }
     static ConstructorHelpers::FObjectFinder<UBehaviorTree> BTObj(TEXT("/Script/AIModule.BehaviorTree'/Game/bear-animated-urso-3d-model-free/Blueprints/BT_BearCharacter.BT_BearCharacter'"));
@@ -42,7 +42,7 @@ void ABear_AIController::OnPossess(APawn* InPawn)
     UBlackboardComponent* bbComponent = Blackboard;
     if(UseBlackboard(BBAsset, bbComponent))
     {
-        GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, TEXT("Behavior Tree 시작됨"));
+        //GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, TEXT("Behavior Tree 시작됨"));
 		bbComponent->SetValueAsVector(HomePosKey, InPawn->GetActorLocation());
         if(!RunBehaviorTree(BTAsset))
         {
